@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         简书文章去广告
 // @namespace    https://github.com/kimverchan
-// @version      0.3
+// @version      0.4
 // @description  简书文章出现zIndex高于文章的广告，自动去除它们
 // @author       kimver
 // @match        https://www.jianshu.com/p/*
@@ -12,15 +12,16 @@
 
 (function() {
 	'use strict';
-	let removeSuccess = false
+	const adZIndex = 2000000000
+	let isRemoving = false
 	const fn = () => {
+		isRemoving = true
 		const divList = document.body.querySelectorAll('body>div')
 		const adZIndex = 2000000000
 		divList.forEach(i => {
 			var st = getComputedStyle(i)
 			if (parseInt(st.zIndex) > adZIndex) {
 				document.body.removeChild(i)
-				removeSuccess = true
 			} else if (st.zIndex === 'auto' && i.childNodes) {
 				const hasAd = Array.from(i.childNodes).find(j => {
 					let flag = false;
@@ -31,15 +32,18 @@
 				})
 				if (hasAd) {
 					document.body.removeChild(i)
-					removeSuccess = true
 				}
 			}
 		})
+		isRemoving = false
 	}
 	window.onload = () => {
-		fn();
-		if (!removeSuccess) {
-			setTimeout(fn, 2000)
-		}
+		const body = document.body
+		fn()
+		body.addEventListener('DOMSubtreeModified', (e) => {
+			if(!isRemoving) {
+				fn()
+			}
+		})
 	}
 })();
